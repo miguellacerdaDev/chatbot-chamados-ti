@@ -2,22 +2,10 @@
 
 Fluxo no n8n para coletar informações de suporte, apresentar um resumo e registrar o chamado no Supabase após a confirmação do solicitante.
 
-O projeto nasceu a partir de um tutorial de integração entre n8n e WhatsApp e foi adaptado para um atendimento de TI com validação de dados, confirmação explícita e registro no banco. O desenvolvimento e a revisão contaram com apoio de IA.
+O projeto nasceu a partir de um tutorial de integração entre n8n e WhatsApp e foi adaptado para um atendimento de TI com validação de dados, confirmação explícita e registro no banco.
 
 ## Como funciona
 
-```mermaid
-flowchart LR
-    W[WhatsApp / WAHA] --> F[Webhook e filtro]
-    F --> E[Estado do atendimento no Redis]
-    E --> C{Confirmação válida?}
-    C -->|Ainda não| A[AI Agent / Groq]
-    A --> V[Validar dados e apresentar resumo]
-    V --> R[Resposta ao solicitante]
-    C -->|Sim| S[Registrar no Supabase]
-    S --> P[Consultar o registro salvo]
-    P --> R
-```
 
 1. Recebe mensagens pelo WAHA.
 2. Filtra o evento de mensagem e ignora mensagens do próprio bot.
@@ -28,7 +16,7 @@ flowchart LR
 7. Grava o chamado apenas se o código corresponder ao resumo atual e os dados forem válidos.
 8. Retorna o protocolo após consultar o registro salvo.
 
-## Tecnologias
+ Tecnologias
 
 - n8n e o nó de comunidade `n8n-nodes-waha`.
 - WAHA: recebimento e envio de mensagens no WhatsApp.
@@ -36,21 +24,20 @@ flowchart LR
 - Redis: memória e estado de confirmação.
 - Supabase / PostgreSQL: armazenamento dos chamados.
 
-## Arquivos
+ Arquivos
 
 - `chatbot-chamados-ti.json`: modelo importável e desativado, sem credenciais nem dados fixados.
 - `schema.sql`: estrutura inicial para um projeto Supabase vazio.
 - `workflow.test.cjs`: verificações isoladas de validação e confirmação, sem acesso a serviços externos.
 
-## Instalação
+ Instalação
 
-### 1. Banco de dados
+ 1. Banco de dados
 
 Em um projeto Supabase destinado a testes, execute `schema.sql` no SQL Editor. O arquivo cria a tabela `public.chamados`, suas restrições e permissões. Não execute em um banco que já tenha uma tabela com esse nome sem revisar a estrutura.
 
-A tabela tem RLS habilitado e não concede acesso às funções `anon` e `authenticated`. A integração de backend usa uma credencial secreta com acesso de serviço. Não publique a chave.
 
-### 2. Credenciais no n8n
+ 2. Credenciais no n8n
 
 Cadastre suas próprias credenciais e selecione-as nos nós correspondentes:
 
@@ -63,13 +50,13 @@ Cadastre suas próprias credenciais e selecione-as nos nós correspondentes:
 
 O acesso autorizado do plugin Supabase no ChatGPT não substitui a credencial do Supabase no n8n.
 
-### 3. Importar o workflow
+ 3. Importar o workflow
 
 Importe `chatbot-chamados-ti.json`. O arquivo está com `active: false`, sem credenciais, sem dados de execução e com uma rota de webhook genérica. O nó Gemini desconectado do ambiente de origem foi omitido. Na cópia pública, a chave da memória inclui sessão e contato.
 
 O modelo usa as versões de nós exportadas da instância original. Antes de ativar, verifique a disponibilidade dessas versões e instale o nó WAHA por uma fonte confiável, se necessário.
 
-### 4. Configurar o WAHA
+4. Configurar o WAHA
 
 Configure a sessão WAHA para receber o evento `message` e usar a URL de produção do Webhook publicado. Em contêineres, o endereço precisa ser acessível a partir do WAHA; `localhost` dentro de um contêiner aponta para ele próprio.
 
@@ -77,7 +64,7 @@ O mapeamento de nome do contato usa dados do motor GOWS. Outros motores ou vers�
 
 Não deixe dados de teste fixados no Webhook. Uma execução manual com dados fixados pode reutilizar uma mensagem antiga e enviar uma resposta real.
 
-### 5. Validar e publicar
+ 5. Validar e publicar
 
 Faça a primeira validação em ambiente de teste, com dados fictícios e o envio ao WhatsApp desativado. Depois de revisar as credenciais, os caminhos e os resultados, publique conscientemente a versão.
 
@@ -97,27 +84,10 @@ Faça a primeira validação em ambiente de teste, com dados fictícios e o envi
 
 O status inicial é `PENDENTE`. Concluir um chamado significa atualizar o status, preservando o histórico. Este fluxo ainda não fornece uma tela de gestão dos chamados.
 
-## Confirmação e duplicação
-
-A chave `atendimento_id` tem uma restrição UNIQUE no banco. Repetir uma confirmação mantém a chave do mesmo atendimento. Se a criação falhar, o fluxo consulta o banco antes de afirmar que houve sucesso.
-
-Isso evita duplicar a linha para a mesma chave, mas não promete execução exatamente uma vez nem impede todas as respostas repetidas no WhatsApp. Mensagens simultâneas e falhas de rede exigem validação adicional.
-
-O estado de confirmação expira em 50 minutos. O código associa a confirmação ao resumo, mas não substitui autenticação de usuários.
-
-## Testes locais
-
-Com Node.js 20 ou superior:
-
-```sh
-npm test
-```
-
-Os testes verificam dados válidos e inválidos, preservação de zeros, código incorreto, correção de informações, expiração, separação de contatos, repetição de confirmação, retorno de protocolo e estrutura do arquivo público. Eles não chamam Groq, Redis, WAHA nem Supabase.
 
 Uma gravação de teste foi validada pelo autor no ambiente original. Esta cópia pública foi adaptada para distribuição; importe e valide no seu ambiente antes de ativar.
 
-## Limites atuais
+ Limites atuais
 
 - O modelo pode produzir JSON inválido ou apresentar erros do provedor. Não há garantia de resposta em todas as mensagens.
 - Não há interface de administração, anexos, distribuição para técnicos ou notificações de conclusão.
@@ -126,7 +96,7 @@ Uma gravação de teste foi validada pelo autor no ambiente original. Esta cópi
 - A prioridade é apenas uma classificação inicial e deve ser revisada pela equipe.
 - O webhook deve ter proteção adequada ao ambiente de implantação; a cópia não configura autenticação de entrada.
 
-## Privacidade
+ Privacidade
 
 Este repositório não inclui credenciais, histórico de conversas ou dados dos chamados. Cadastre segredos somente no gerenciador de credenciais do n8n. Não publique capturas contendo nomes, matrículas, e-mails, contatos, protocolos reais ou chaves.
 
