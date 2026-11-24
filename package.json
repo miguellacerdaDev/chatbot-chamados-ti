@@ -1,0 +1,12 @@
+{
+  "name": "chatbot-chamados-ti",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Workflow n8n para chamados de TI via WhatsApp com confirmação e Supabase",
+  "scripts": {
+    "test": "node workflow.test.cjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
